@@ -1,32 +1,81 @@
-
-<!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <title>A-Frame GLB Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
     <style>
-      body {
-        margin: 0;
-        overflow: hidden;
+      #ui {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      button {
+        padding: 8px 12px;
+        font-size: 14px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border: none;
+        border-radius: 5px;
       }
     </style>
   </head>
   <body>
-    <a-scene background="color: #ECECEC">
-      <!-- إضاءة -->
-      <a-entity light="type: ambient; intensity: 0.7"></a-entity>
-      <a-entity light="type: directional; intensity: 0.5" position="1 1 1"></a-entity>
+    <!-- واجهة المستخدم -->
+    <div id="ui">
+      <button id="toggleAnim">تشغيل الأنيميشن</button>
+      <button id="scaleUp">تكبير</button>
+      <button id="scaleDown">تصغير</button>
+    </div>
 
-      <!-- النموذج -->
-      <a-entity gltf-model="model.glb"
-                position="0 1 -3"
-                scale="1 1 1"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
+    <!-- مشهد A-Frame -->
+    <a-scene>
+      <a-entity id="model"
+        gltf-model="model.glb"
+        scale="0.5 0.5 0.5"
+        position="0 0 -2"
+        animation-mixer>
       </a-entity>
-
-      <!-- الكاميرا -->
-      <a-entity camera position="0 1.6 0"></a-entity>
+      <a-camera position="0 1.6 0"></a-camera>
     </a-scene>
+
+    <script>
+      const model = document.querySelector('#model');
+      const btnAnim = document.querySelector('#toggleAnim');
+      let animPlaying = true;
+
+      btnAnim.addEventListener('click', () => {
+        animPlaying = !animPlaying;
+        if (animPlaying) {
+          model.setAttribute('animation-mixer', 'clip: *'); // يشغل كل الحركات أو الحركة الوحيدة
+          btnAnim.textContent = 'إيقاف الأنيميشن';
+        } else {
+          model.removeAttribute('animation-mixer');
+          btnAnim.textContent = 'تشغيل الأنيميشن';
+        }
+      });
+
+      // تكبير/تصغير
+      document.querySelector('#scaleUp').addEventListener('click', () => {
+        let s = model.getAttribute('scale');
+        model.setAttribute('scale', {
+          x: s.x + 0.1,
+          y: s.y + 0.1,
+          z: s.z + 0.1
+        });
+      });
+
+      document.querySelector('#scaleDown').addEventListener('click', () => {
+        let s = model.getAttribute('scale');
+        model.setAttribute('scale', {
+          x: Math.max(s.x - 0.1, 0.1),
+          y: Math.max(s.y - 0.1, 0.1),
+          z: Math.max(s.z - 0.1, 0.1)
+        });
+      });
+    </script>
   </body>
 </html>
