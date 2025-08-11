@@ -10,20 +10,24 @@
         bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
-        z-index: 10;
+        z-index: 9999;
         display: flex;
-        flex-wrap: wrap;
-        gap: 5px;
-        justify-content: center;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
       }
       button {
-        padding: 8px 12px;
-        font-size: 14px;
+        padding: 10px 15px;
+        font-size: 16px;
         background: rgba(0,0,0,0.6);
         color: white;
         border: none;
-        border-radius: 5px;
-        min-width: 60px;
+        border-radius: 6px;
+        min-width: 50px;
       }
     </style>
   </head>
@@ -31,13 +35,19 @@
   <body style="margin: 0; overflow: hidden;">
     <!-- أزرار التحكم -->
     <div id="ui">
-      <button id="toggleAnim">إيقاف الأنيميشن</button>
-      <button id="scaleUp">+</button>
-      <button id="scaleDown">-</button>
-      <button id="moveUp">↑</button>
-      <button id="moveDown">↓</button>
-      <button id="moveLeft">←</button>
-      <button id="moveRight">→</button>
+      <div class="row">
+        <button id="toggleAnim">⏯</button>
+        <button id="scaleUp">+</button>
+        <button id="scaleDown">−</button>
+      </div>
+      <div class="row">
+        <button id="moveUp">↑</button>
+      </div>
+      <div class="row">
+        <button id="moveLeft">←</button>
+        <button id="moveDown">↓</button>
+        <button id="moveRight">→</button>
+      </div>
     </div>
 
     <!-- مشهد AR -->
@@ -63,49 +73,40 @@
       const btnAnim = document.querySelector('#toggleAnim');
       let animPlaying = true;
 
-      // تشغيل/إيقاف الأنيميشن
       btnAnim.addEventListener('click', () => {
         animPlaying = !animPlaying;
         if (animPlaying) {
           model.setAttribute('animation-mixer', 'clip: *; loop: repeat;');
-          btnAnim.textContent = 'إيقاف الأنيميشن';
         } else {
           model.removeAttribute('animation-mixer');
-          btnAnim.textContent = 'تشغيل الأنيميشن';
         }
       });
 
-      // تكبير
       document.querySelector('#scaleUp').addEventListener('click', () => {
         let s = model.getAttribute('scale');
         model.setAttribute('scale', { x: s.x + 0.1, y: s.y + 0.1, z: s.z + 0.1 });
       });
 
-      // تصغير
       document.querySelector('#scaleDown').addEventListener('click', () => {
         let s = model.getAttribute('scale');
         model.setAttribute('scale', { x: Math.max(s.x - 0.1, 0.1), y: Math.max(s.y - 0.1, 0.1), z: Math.max(s.z - 0.1, 0.1) });
       });
 
-      // تحريك ↑
       document.querySelector('#moveUp').addEventListener('click', () => {
         let p = model.getAttribute('position');
         model.setAttribute('position', { x: p.x, y: p.y + 0.1, z: p.z });
       });
 
-      // تحريك ↓
       document.querySelector('#moveDown').addEventListener('click', () => {
         let p = model.getAttribute('position');
         model.setAttribute('position', { x: p.x, y: p.y - 0.1, z: p.z });
       });
 
-      // تحريك ←
       document.querySelector('#moveLeft').addEventListener('click', () => {
         let p = model.getAttribute('position');
         model.setAttribute('position', { x: p.x - 0.1, y: p.y, z: p.z });
       });
 
-      // تحريك →
       document.querySelector('#moveRight').addEventListener('click', () => {
         let p = model.getAttribute('position');
         model.setAttribute('position', { x: p.x + 0.1, y: p.y, z: p.z });
