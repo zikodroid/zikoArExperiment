@@ -2,6 +2,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
     <style>
       #ui {
         position: fixed;
@@ -32,7 +33,7 @@
   </head>
 
   <body style="margin: 0; overflow: hidden;">
-    <!-- واجهة الأزرار -->
+    <!-- واجهة الزرار -->
     <div id="ui">
       <div class="row">
         <button id="playMount">تشغيل Mount</button>
@@ -46,55 +47,64 @@
 
     <!-- مشهد A-Frame -->
     <a-scene
-      embedded
       vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: true"
-      renderer="colorManagement: true; physicallyCorrectLights: true"
       webxr="optionalFeatures: hit-test; requiredFeatures: local-floor;"
+      device-orientation-permission-ui="enabled: true"
+      embedded
+      renderer="colorManagement: true; physicallyCorrectLights: true;"
     >
-      <!-- الموديل -->
-      <a-entity
-        id="model"
-        gltf-model="model.glb"
-        position="0 0 -2"
-        scale="0.2 0.2 0.2"
-      ></a-entity>
+      <!-- كائن تغليف للتحكم بالحجم -->
+      <a-entity id="wrapper" position="0 1 -2.5" scale="1 1 1">
+        <a-entity
+          id="model"
+          gltf-model="model.glb"
+          animation-mixer
+        ></a-entity>
+      </a-entity>
 
       <!-- الكاميرا -->
       <a-camera></a-camera>
     </a-scene>
 
-    <!-- سكريبت التحكم -->
     <script>
       const model = document.querySelector("#model");
+      const wrapper = document.querySelector("#wrapper");
 
+      // تشغيل Mount
       document.querySelector("#playMount").addEventListener("click", () => {
         model.removeAttribute("animation-mixer");
-        model.setAttribute("animation-mixer", { clip: "Mount", loop: "once" });
-      });
-
-      document.querySelector("#playDismount").addEventListener("click", () => {
-        model.removeAttribute("animation-mixer");
-        model.setAttribute("animation-mixer", { clip: "Dismount", loop: "once" });
-      });
-
-      document.querySelector("#scaleUp").addEventListener("click", () => {
-        const scale = model.getAttribute("scale");
-        const step = 0.1;
-        model.setAttribute("scale", {
-          x: scale.x + step,
-          y: scale.y + step,
-          z: scale.z + step,
+        model.setAttribute("animation-mixer", {
+          clip: "Mount",
+          loop: "once",
         });
       });
 
+      // تشغيل Dismount
+      document.querySelector("#playDismount").addEventListener("click", () => {
+        model.removeAttribute("animation-mixer");
+        model.setAttribute("animation-mixer", {
+          clip: "Dismount",
+          loop: "once",
+        });
+      });
+
+      // تكبير
+      document.querySelector("#scaleUp").addEventListener("click", () => {
+        const s = wrapper.getAttribute("scale");
+        wrapper.setAttribute("scale", {
+          x: s.x + 0.1,
+          y: s.y + 0.1,
+          z: s.z + 0.1,
+        });
+      });
+
+      // تصغير
       document.querySelector("#scaleDown").addEventListener("click", () => {
-        const scale = model.getAttribute("scale");
-        const step = 0.1;
-        model.setAttribute("scale", {
-          x: Math.max(0.1, scale.x - step),
-          y: Math.max(0.1, scale.y - step),
-          z: Math.max(0.1, scale.z - step),
+        const s = wrapper.getAttribute("scale");
+        wrapper.setAttribute("scale", {
+          x: Math.max(0.1, s.x - 0.1),
+          y: Math.max(0.1, s.y - 0.1),
+          z: Math.max(0.1, s.z - 0.1),
         });
       });
     </script>
