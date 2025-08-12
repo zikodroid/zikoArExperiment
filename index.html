@@ -1,7 +1,6 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- مكتبة A-Frame -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <style>
       #ui {
@@ -15,102 +14,95 @@
         gap: 8px;
         align-items: center;
       }
+
       .row {
         display: flex;
-        gap: 8px;
+        gap: 10px;
       }
+
       button {
-        padding: 10px 15px;
         font-size: 16px;
-        background: rgba(0,0,0,0.6);
-        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
         border: none;
-        border-radius: 6px;
-        min-width: 50px;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
       }
     </style>
   </head>
 
   <body style="margin: 0; overflow: hidden;">
-    <!-- أزرار التحكم -->
+    <!-- واجهة التحكم -->
     <div id="ui">
       <div class="row">
-        <button id="toggleAnim">⏯</button>
-        <button id="scaleUp">+</button>
-        <button id="scaleDown">−</button>
+        <button id="playMount">تشغيل Mount</button>
+        <button id="playDismount">تشغيل Dismount</button>
       </div>
       <div class="row">
-        <button id="moveUp">↑</button>
-      </div>
-      <div class="row">
-        <button id="moveLeft">←</button>
-        <button id="moveDown">↓</button>
-        <button id="moveRight">→</button>
+        <button id="scaleUp">تكبير</button>
+        <button id="scaleDown">تصغير</button>
       </div>
     </div>
 
-    <!-- مشهد AR -->
+    <!-- مشهد A-Frame -->
     <a-scene
-      renderer="colorManagement: true;"
-      xr-mode-ui="enabled: true"
-      webxr="optionalFeatures: hit-test;"
       vr-mode-ui="enabled: false"
+      webxr="optionalFeatures: hit-test; requiredFeatures: local-floor;"
+      device-orientation-permission-ui="enabled: true"
       embedded
-      device-orientation-permission-ui="enabled: true">
-
-      <!-- الموديل -->
-      <a-entity id="model"
+      renderer="colorManagement: true; physicallyCorrectLights: true;"
+    >
+      <!-- المجسم -->
+      <a-entity
+        id="model"
         gltf-model="model.glb"
         position="0 0 -2"
-        scale="0.5 0.5 0.5"
-        animation-mixer="clip: *; loop: repeat;">
-      </a-entity>
+        scale="1 1 1"
+      ></a-entity>
 
       <a-camera></a-camera>
     </a-scene>
 
+    <!-- سكريبت التحكم -->
     <script>
-      const model = document.querySelector('#model');
-      let animPlaying = true;
+      const model = document.querySelector("#model");
 
-      document.querySelector('#toggleAnim').addEventListener('click', () => {
-        animPlaying = !animPlaying;
-        if (animPlaying) {
-          model.setAttribute('animation-mixer', 'clip: *; loop: repeat;');
-        } else {
-          model.removeAttribute('animation-mixer');
-        }
+      // تشغيل الأكشن Mount
+      document.querySelector("#playMount").addEventListener("click", () => {
+        model.setAttribute("animation-mixer", {
+          clip: "Mount",
+          loop: "once",
+        });
       });
 
-      document.querySelector('#scaleUp').addEventListener('click', () => {
-        let s = model.getAttribute('scale');
-        model.setAttribute('scale', { x: s.x + 0.1, y: s.y + 0.1, z: s.z + 0.1 });
+      // تشغيل الأكشن Dismount
+      document.querySelector("#playDismount").addEventListener("click", () => {
+        model.setAttribute("animation-mixer", {
+          clip: "Dismount",
+          loop: "once",
+        });
       });
 
-      document.querySelector('#scaleDown').addEventListener('click', () => {
-        let s = model.getAttribute('scale');
-        model.setAttribute('scale', { x: Math.max(s.x - 0.1, 0.1), y: Math.max(s.y - 0.1, 0.1), z: Math.max(s.z - 0.1, 0.1) });
+      // تكبير
+      document.querySelector("#scaleUp").addEventListener("click", () => {
+        let s = model.getAttribute("scale");
+        model.setAttribute("scale", {
+          x: s.x + 0.1,
+          y: s.y + 0.1,
+          z: s.z + 0.1,
+        });
       });
 
-      document.querySelector('#moveUp').addEventListener('click', () => {
-        let p = model.getAttribute('position');
-        model.setAttribute('position', { x: p.x, y: p.y + 0.1, z: p.z });
-      });
-
-      document.querySelector('#moveDown').addEventListener('click', () => {
-        let p = model.getAttribute('position');
-        model.setAttribute('position', { x: p.x, y: p.y - 0.1, z: p.z });
-      });
-
-      document.querySelector('#moveLeft').addEventListener('click', () => {
-        let p = model.getAttribute('position');
-        model.setAttribute('position', { x: p.x - 0.1, y: p.y, z: p.z });
-      });
-
-      document.querySelector('#moveRight').addEventListener('click', () => {
-        let p = model.getAttribute('position');
-        model.setAttribute('position', { x: p.x + 0.1, y: p.y, z: p.z });
+      // تصغير
+      document.querySelector("#scaleDown").addEventListener("click", () => {
+        let s = model.getAttribute("scale");
+        model.setAttribute("scale", {
+          x: Math.max(0.1, s.x - 0.1),
+          y: Math.max(0.1, s.y - 0.1),
+          z: Math.max(0.1, s.z - 0.1),
+        });
       });
     </script>
   </body>
 </html>
+
