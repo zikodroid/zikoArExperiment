@@ -2,6 +2,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
     <style>
       #ui {
         position: fixed;
@@ -14,28 +15,28 @@
         gap: 8px;
         align-items: center;
       }
-
       .row {
         display: flex;
         gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
       }
-
       button {
-        font-size: 16px;
-        padding: 10px 20px;
+        font-size: 14px;
+        padding: 8px 14px;
         border-radius: 8px;
         border: none;
         background-color: rgba(0, 0, 0, 0.6);
         color: white;
+        cursor: pointer;
       }
     </style>
   </head>
 
   <body style="margin: 0; overflow: hidden;">
     <div id="ui">
-      <div class="row">
-        <button id="playMount">تشغيل Mount</button>
-        <button id="playDismount">تشغيل Dismount</button>
+      <div class="row" id="animationButtons">
+        <!-- أزرار الأنيميشنات تُضاف تلقائياً -->
       </div>
       <div class="row">
         <button id="scaleUp">تكبير</button>
@@ -44,13 +45,13 @@
     </div>
 
     <a-scene
-      vr-mode-ui="enabled: false"
       embedded
-      webxr="optionalFeatures: hit-test; requiredFeatures: local-floor;"
+      vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: true"
+      webxr="optionalFeatures: hit-test; requiredFeatures: local-floor;"
       renderer="colorManagement: true; physicallyCorrectLights: true;"
     >
-      <!-- تغليف للتحكم بالحجم والموقع -->
+      <!-- تغليف للتحكم -->
       <a-entity id="wrapper" position="0 1 -4" scale="1 1 1">
         <a-entity
           id="model"
@@ -59,31 +60,41 @@
         ></a-entity>
       </a-entity>
 
-      <a-camera></a-camera>
+      <!-- الكاميرا مع orbit-controls -->
+      <a-entity camera look-controls orbit-controls="target: 0 1 0; enableZoom: true;"></a-entity>
     </a-scene>
 
     <script>
       const model = document.querySelector("#model");
       const wrapper = document.querySelector("#wrapper");
+      const animBtns = document.querySelector("#animationButtons");
 
-      function playAnimation(clipName) {
-        model.removeAttribute("animation-mixer");
-        setTimeout(() => {
-          model.setAttribute("animation-mixer", {
-            clip: clipName,
-            loop: "once"
+      // بعد تحميل الموديل
+      model.addEventListener("model-loaded", () => {
+        const clips = model.components["gltf-model"].model.animations;
+        if (!clips || clips.length === 0) {
+          alert("❌ لا توجد أنيميشنات داخل هذا الملف.");
+          return;
+        }
+
+        clips.forEach((clip) => {
+          const name = clip.name;
+          const btn = document.createElement("button");
+          btn.textContent = "تشغيل " + name;
+          btn.addEventListener("click", () => {
+            model.removeAttribute("animation-mixer");
+            setTimeout(() => {
+              model.setAttribute("animation-mixer", {
+                clip: name,
+                loop: "once"
+              });
+            }, 100);
           });
-        }, 100); // نضيف تأخير بسيط لضمان إعادة التشغيل
-      }
-
-      document.querySelector("#playMount").addEventListener("click", () => {
-        playAnimation("Mount");
+          animBtns.appendChild(btn);
+        });
       });
 
-      document.querySelector("#playDismount").addEventListener("click", () => {
-        playAnimation("Dismount");
-      });
-
+      // تكبير
       document.querySelector("#scaleUp").addEventListener("click", () => {
         const s = wrapper.getAttribute("scale");
         wrapper.setAttribute("scale", {
@@ -93,6 +104,7 @@
         });
       });
 
+      // تصغير
       document.querySelector("#scaleDown").addEventListener("click", () => {
         const s = wrapper.getAttribute("scale");
         wrapper.setAttribute("scale", {
@@ -104,3 +116,4 @@
     </script>
   </body>
 </html>
+
