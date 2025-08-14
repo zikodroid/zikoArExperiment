@@ -9,7 +9,6 @@
     <script src="https://unpkg.com/aframe-orbit-controls@1.3.2/dist/aframe-orbit-controls.min.js"></script>
   </head>
   <body>
-    <!-- أزرار التحكم -->
     <div style="position:fixed;top:10px;left:10px;z-index:999;">
       <button onclick="moveModel(-0.2,0,0)">⬅️</button>
       <button onclick="moveModel(0.2,0,0)">➡️</button>
@@ -39,8 +38,7 @@
       const model = document.getElementById('model');
       model.addEventListener('model-loaded', function () {
         modelReady = true;
-        // عند التحميل، أوقف الأنيميشن تماماً
-        model.removeAttribute('animation-mixer');
+        model.removeAttribute('animation-mixer'); // لا يوجد أي أنيميشن افتراضي
       });
 
       function moveModel(dx,dy,dz) {
@@ -54,8 +52,11 @@
       }
 
       function playAnim(clipName) {
-        if (!modelReady) return;
-        // إعادة تعيين الـ animation-mixer بشكل صريح مع كل ضغطة زر
+        if (!modelReady) {
+          alert("الموديل لم يتم تحميله بعد!");
+          return;
+        }
+        // شغل الأنيميشن باسم Mount أو Dismount تماماً كما هو ظاهر في ملف GLB
         model.setAttribute('animation-mixer', {
           clip: clipName,
           loop: 'once',
@@ -64,7 +65,7 @@
         });
       }
 
-      // تبديل تلقائي بين orbit-controls وlook-controls
+      // تبديل تلقائي بين look-controls و orbit-controls
       const cam = document.getElementById('mainCamera');
       if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
         cam.setAttribute('look-controls', '');
