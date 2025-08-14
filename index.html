@@ -10,77 +10,78 @@
   </head>
   <body>
     <div style="position:fixed;top:10px;left:10px;z-index:999;">
+      <button onclick="moveModel(-0.2,0,0)">⬅️</button>
+      <button onclick="moveModel(0.2,0,0)">➡️</button>
+      <button onclick="moveModel(0,0,0.2)">⬇️</button>
+      <button onclick="moveModel(0,0,-0.2)">⬆️</button>
+      <button onclick="moveModel(0,0.2,0)">🔼</button>
+      <button onclick="moveModel(0,-0.2,0)">🔽</button>
       <button onclick="playAnim('Mount')">Mount</button>
       <button onclick="playAnim('Dismount')">Dismount</button>
     </div>
-    <a-scene>
+    <a-scene background="color: #e6e6e6">
       <a-assets>
         <a-asset-item id="gltf" src="model.glb"></a-asset-item>
       </a-assets>
       <a-entity id="model"
         gltf-model="#gltf"
-        animation-mixer
         position="0 1.5 0"
         scale="1 1 1">
       </a-entity>
       <a-entity id="mainCamera"
         camera
-        orbit-controls="target: 0 1.5 0"
         position="0 1.5 4">
       </a-entity>
     </a-scene>
     <script>
+      // لا تكرر let modelReady!
       let modelReady = false;
       const model = document.getElementById('model');
       model.addEventListener('model-loaded', function () {
         modelReady = true;
-        // بعد التحميل، أوقف كل الأنيميشنات
-        model.setAttribute('animation-mixer', {clip: '', loop: 'once'});
-        // أظهر كل الأنيميشنات في الكونسول
-        const clips = model.components['gltf-model'].model.animations || [];
-        console.log("Animation Clips found:");
-        for (let i=0; i<clips.length; i++) {
-          console.log(clips[i].name);
-        }
+        model.removeAttribute('animation-mixer');
       });
+
+      function moveModel(dx,dy,dz) {
+        if (!modelReady) return;
+        let pos = model.getAttribute('position');
+        model.setAttribute('position', {
+          x: pos.x + dx,
+          y: pos.y + dy,
+          z: pos.z + dz
+        });
+      }
 
       function playAnim(clipName) {
         if (!modelReady) {
           alert("الموديل لم يتم تحميله بعد!");
           return;
         }
-        console.log("Trying to play:", clipName);
         model.setAttribute('animation-mixer', {
           clip: clipName,
           loop: 'once',
           timeScale: 1,
           repetitions: 1
         });
-        setTimeout(() => {
-          let mixer = model.components['animation-mixer'];
-          if (!mixer || !mixer.mixer || mixer.mixer._actions.length == 0) {
-            alert("⚠️ لم يتم تشغيل الأنيميشن: " + clipName + "\nتحقق من اسم الأنيميشن أو الملف.");
-          } else {
-            console.log("تم إرسال الأمر لتشغيل الأنيميشن:", clipName);
-          }
-        }, 300);
       }
-      let modelReady = false;
-const model = document.getElementById('model');
-model.addEventListener('model-loaded', function () {
-  modelReady = true;
-  // عرض كل الأنيميشنات كما يراها الكود
-  setTimeout(() => {
-    const clips = model.components['gltf-model'].model.animations || [];
-    console.log("ANIMATION CLIPS FROM JS:");
-    for (let i=0; i<clips.length; i++) {
-      console.log("CLIP", i+1, ":", clips[i].name, "|", JSON.stringify(clips[i].name));
-    }
-    if (clips.length === 0) {
-      alert("الكود لم يجد أي أنيميشنات بالملف رغم ظهورها في GLTF Viewer. غالباً المشكلة من طريقة ربط الأنيميشنات بالـ Mesh أو Root Scene.");
-    }
-  }, 1000);
-});
+
+      // تبديل تلقائي بين look-controls و orbit-controls
+      const cam = document.getElementById('mainCamera');
+      if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        cam.setAttribute('look-controls', '');
+      } else {
+        cam.setAttribute('orbit-controls', `
+          target: 0 1.5 0;
+          enableDamping: true;
+          dampingFactor: 0.12;
+          rotateSpeed: 0.9;
+          zoomSpeed: 1.2;
+          panSpeed: 1.0;
+          minDistance: 1;
+          maxDistance: 20;
+          screenSpacePanning: true;
+        `);
+      }
     </script>
   </body>
 </html>
