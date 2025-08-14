@@ -2,14 +2,21 @@
   <head>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-orbit-controls@1.3.1/dist/aframe-orbit-controls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
   </head>
   <body style="margin:0;overflow:hidden;">
     <!-- أزرار التحكم -->
     <div style="position:fixed;top:10px;left:10px;z-index:999;">
+      <button onclick="moveModel(-0.2,0,0)">⬅️</button>
+      <button onclick="moveModel(0.2,0,0)">➡️</button>
+      <button onclick="moveModel(0,0,0.2)">⬇️</button>
+      <button onclick="moveModel(0,0,-0.2)">⬆️</button>
+      <button onclick="moveModel(0,0.2,0)">🔼</button>
+      <button onclick="moveModel(0,-0.2,0)">🔽</button>
       <button onclick="playAnim('Mount')">Mount</button>
       <button onclick="playAnim('Dismount')">Dismount</button>
     </div>
-    <a-scene background="color: #E6E6E6">
+    <a-scene background="color: #e6e6e6">
       <a-assets>
         <a-asset-item id="gltf" src="model.glb"></a-asset-item>
       </a-assets>
@@ -19,19 +26,19 @@
         scale="1 1 1"
         animation-mixer="clip: none;">
       </a-entity>
-      <!-- كاميرا بأوربت كنترول حول نقطة (0,1.5,0) -->
-      <a-entity id="cameraRig"
+      <!-- الكاميرا مع Orbit Controls -->
+      <a-entity id="mainCamera"
         camera
         position="0 1.5 4"
         orbit-controls="
           target: 0 1.5 0;
           enableDamping: true;
-          dampingFactor: 0.1;
-          rotateSpeed:0.4;
-          zoomSpeed:0.4;
-          panSpeed:0.3;
+          dampingFactor: 0.09;
+          rotateSpeed:0.5;
+          zoomSpeed:0.5;
+          panSpeed:0.4;
           minDistance:1;
-          maxDistance:15;">
+          maxDistance:20;">
       </a-entity>
     </a-scene>
     <script>
@@ -41,6 +48,15 @@
         modelReady = true;
         model.setAttribute('animation-mixer', {clip: 'none'});
       });
+      function moveModel(dx,dy,dz) {
+        if (!modelReady) return;
+        let pos = model.getAttribute('position');
+        model.setAttribute('position', {
+          x: pos.x + dx,
+          y: pos.y + dy,
+          z: pos.z + dz
+        });
+      }
       function playAnim(clipName) {
         if (!modelReady) return;
         model.setAttribute('animation-mixer', {
