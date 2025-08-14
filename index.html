@@ -10,26 +10,22 @@
   </head>
   <body>
     <div style="position:fixed;top:10px;left:10px;z-index:999;">
-      <button onclick="moveModel(-0.2,0,0)">⬅️</button>
-      <button onclick="moveModel(0.2,0,0)">➡️</button>
-      <button onclick="moveModel(0,0,0.2)">⬇️</button>
-      <button onclick="moveModel(0,0,-0.2)">⬆️</button>
-      <button onclick="moveModel(0,0.2,0)">🔼</button>
-      <button onclick="moveModel(0,-0.2,0)">🔽</button>
       <button onclick="playAnim('Mount')">Mount</button>
       <button onclick="playAnim('Dismount')">Dismount</button>
     </div>
-    <a-scene background="color: #e6e6e6">
+    <a-scene>
       <a-assets>
         <a-asset-item id="gltf" src="model.glb"></a-asset-item>
       </a-assets>
       <a-entity id="model"
         gltf-model="#gltf"
+        animation-mixer
         position="0 1.5 0"
         scale="1 1 1">
       </a-entity>
       <a-entity id="mainCamera"
         camera
+        orbit-controls="target: 0 1.5 0"
         position="0 1.5 4">
       </a-entity>
     </a-scene>
@@ -38,49 +34,36 @@
       const model = document.getElementById('model');
       model.addEventListener('model-loaded', function () {
         modelReady = true;
-        model.removeAttribute('animation-mixer'); // لا يوجد أي أنيميشن افتراضي
+        // بعد التحميل، أوقف كل الأنيميشنات
+        model.setAttribute('animation-mixer', {clip: '', loop: 'once'});
+        // أظهر كل الأنيميشنات في الكونسول
+        const clips = model.components['gltf-model'].model.animations || [];
+        console.log("Animation Clips found:");
+        for (let i=0; i<clips.length; i++) {
+          console.log(clips[i].name);
+        }
       });
-
-      function moveModel(dx,dy,dz) {
-        if (!modelReady) return;
-        let pos = model.getAttribute('position');
-        model.setAttribute('position', {
-          x: pos.x + dx,
-          y: pos.y + dy,
-          z: pos.z + dz
-        });
-      }
 
       function playAnim(clipName) {
         if (!modelReady) {
           alert("الموديل لم يتم تحميله بعد!");
           return;
         }
-        // شغل الأنيميشن باسم Mount أو Dismount تماماً كما هو ظاهر في ملف GLB
+        console.log("Trying to play:", clipName);
         model.setAttribute('animation-mixer', {
           clip: clipName,
           loop: 'once',
           timeScale: 1,
           repetitions: 1
         });
-      }
-
-      // تبديل تلقائي بين look-controls و orbit-controls
-      const cam = document.getElementById('mainCamera');
-      if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        cam.setAttribute('look-controls', '');
-      } else {
-        cam.setAttribute('orbit-controls', `
-          target: 0 1.5 0;
-          enableDamping: true;
-          dampingFactor: 0.12;
-          rotateSpeed: 0.9;
-          zoomSpeed: 1.2;
-          panSpeed: 1.0;
-          minDistance: 1;
-          maxDistance: 20;
-          screenSpacePanning: true;
-        `);
+        setTimeout(() => {
+          let mixer = model.components['animation-mixer'];
+          if (!mixer || !mixer.mixer || mixer.mixer._actions.length == 0) {
+            alert("⚠️ لم يتم تشغيل الأنيميشن: " + clipName + "\nتحقق من اسم الأنيميشن أو الملف.");
+          } else {
+            console.log("تم إرسال الأمر لتشغيل الأنيميشن:", clipName);
+          }
+        }, 300);
       }
     </script>
   </body>
