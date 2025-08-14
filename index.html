@@ -2,67 +2,38 @@
   <head>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   </head>
-  <body>
+  <body style="margin:0;overflow:hidden;">
+    <!-- أزرار تحكم موضع المجسم -->
+    <div style="position:fixed;top:10px;left:10px;z-index:999;">
+      <button onclick="moveModel(-0.2,0,0)">⬅️</button>
+      <button onclick="moveModel(0.2,0,0)">➡️</button>
+      <button onclick="moveModel(0,0,0.2)">⬇️</button>
+      <button onclick="moveModel(0,0,-0.2)">⬆️</button>
+      <button onclick="moveModel(0,0.2,0)">🔼</button>
+      <button onclick="moveModel(0,-0.2,0)">🔽</button>
+    </div>
     <a-scene>
-      <!-- الكاميرا -->
-      <a-entity camera position="0 1.6 3"></a-entity>
-
-      <!-- المجسم -->
-      <a-entity id="model" gltf-model="model.glb" scale="1 1 1" position="0 0 -3" animation-mixer></a-entity>
-
-      <!-- أزرار تحريك الجسم -->
-      <a-entity id="controls-move" position="0 1.5 -1.5">
-        <a-plane id="btn-forward" color="#ccc" width="0.3" height="0.2" position="0 0.5 0"
-                 text="value: ↑; align: center" class="clickable"></a-plane>
-        <a-plane id="btn-back" color="#ccc" width="0.3" height="0.2" position="0 -0.5 0"
-                 text="value: ↓; align: center" class="clickable"></a-plane>
-        <a-plane id="btn-left" color="#ccc" width="0.3" height="0.2" position="-0.4 0 0"
-                 text="value: ←; align: center" class="clickable"></a-plane>
-        <a-plane id="btn-right" color="#ccc" width="0.3" height="0.2" position="0.4 0 0"
-                 text="value: →; align: center" class="clickable"></a-plane>
-        <a-plane id="btn-up" color="#ccc" width="0.3" height="0.2" position="0 0.1 0.1"
-                 text="value: ↑↑; align: center" class="clickable"></a-plane>
-        <a-plane id="btn-down" color="#ccc" width="0.3" height="0.2" position="0 -0.1 0.1"
-                 text="value: ↓↓; align: center" class="clickable"></a-plane>
+      <a-assets>
+        <a-asset-item id="gltf" src="model.glb"></a-asset-item>
+      </a-assets>
+      <a-entity id="model"
+        gltf-model="#gltf"
+        position="0 1.5 -3"
+        scale="1 1 1"
+        animation-mixer>
       </a-entity>
-
-      <!-- أزرار الأنيميشن -->
-      <a-entity id="controls-anim" position="0 0.7 -1.5">
-        <a-plane id="btnMount" color="#4CAF50" width="0.6" height="0.2" position="0 0.2 0"
-                 text="value: Mount; align: center" class="clickable"></a-plane>
-        <a-plane id="btnDismount" color="#F44336" width="0.6" height="0.2" position="0 -0.2 0"
-                 text="value: Dismount; align: center" class="clickable"></a-plane>
-      </a-entity>
-
-      <script>
-        // تحريك المجسم
-        const step = 0.2;
-        const model = document.querySelector('#model');
-
-        function move(dx, dy, dz) {
-          let pos = model.getAttribute('position');
-          model.setAttribute('position', {
-            x: pos.x + dx,
-            y: pos.y + dy,
-            z: pos.z + dz
-          });
-        }
-
-        document.querySelector('#btn-forward').addEventListener('click', () => move(0, 0, -step));
-        document.querySelector('#btn-back').addEventListener('click', () => move(0, 0, step));
-        document.querySelector('#btn-left').addEventListener('click', () => move(-step, 0, 0));
-        document.querySelector('#btn-right').addEventListener('click', () => move(step, 0, 0));
-        document.querySelector('#btn-up').addEventListener('click', () => move(0, step, 0));
-        document.querySelector('#btn-down').addEventListener('click', () => move(0, -step, 0));
-
-        // الأنيميشن
-        document.querySelector('#btnMount').addEventListener('click', () => {
-          model.setAttribute('animation-mixer', {clip: 'Mount', loop: 'once'});
-        });
-        document.querySelector('#btnDismount').addEventListener('click', () => {
-          model.setAttribute('animation-mixer', {clip: 'Dismount', loop: 'once'});
-        });
-      </script>
+      <a-camera position="0 1.6 0"></a-camera>
     </a-scene>
+    <script>
+      function moveModel(dx,dy,dz) {
+        const obj = document.getElementById('model');
+        let pos = obj.getAttribute('position');
+        obj.setAttribute('position', {
+          x: pos.x + dx,
+          y: pos.y + dy,
+          z: pos.z + dz
+        });
+      }
+    </script>
   </body>
 </html>
