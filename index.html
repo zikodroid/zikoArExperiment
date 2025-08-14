@@ -65,6 +65,22 @@
           }
         }, 300);
       }
+      let modelReady = false;
+const model = document.getElementById('model');
+model.addEventListener('model-loaded', function () {
+  modelReady = true;
+  // عرض كل الأنيميشنات كما يراها الكود
+  setTimeout(() => {
+    const clips = model.components['gltf-model'].model.animations || [];
+    console.log("ANIMATION CLIPS FROM JS:");
+    for (let i=0; i<clips.length; i++) {
+      console.log("CLIP", i+1, ":", clips[i].name, "|", JSON.stringify(clips[i].name));
+    }
+    if (clips.length === 0) {
+      alert("الكود لم يجد أي أنيميشنات بالملف رغم ظهورها في GLTF Viewer. غالباً المشكلة من طريقة ربط الأنيميشنات بالـ Mesh أو Root Scene.");
+    }
+  }, 1000);
+});
     </script>
   </body>
 </html>
