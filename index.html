@@ -1,7 +1,10 @@
 <html>
   <head>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <!-- استيراد Orbit Controls من مصدر مضمون -->
     <script src="https://unpkg.com/aframe-orbit-controls@1.3.1/dist/aframe-orbit-controls.min.js"></script>
+    <!-- استيراد animation-mixer -->
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
   </head>
   <body style="margin:0;overflow:hidden;">
     <!-- أزرار التحكم -->
@@ -23,10 +26,10 @@
         gltf-model="#gltf"
         position="0 1.5 0"
         scale="1 1 1"
-        animation-mixer="clip: none;">
+        animation-mixer="clip:none;">
       </a-entity>
-      <!-- الكاميرا مع Orbit Controls حقيقي -->
-      <a-entity id="mainCamera"
+      <!-- الكاميرا orbit-controls مع id="camera" -->
+      <a-entity id="camera"
         camera
         orbit-controls="target: 0 1.5 0;
                         enableDamping: true;
@@ -40,12 +43,10 @@
       </a-entity>
     </a-scene>
     <script>
-      // نحفظ حالة تحميل الموديل
       let modelReady = false;
       const model = document.getElementById('model');
       model.addEventListener('model-loaded', function () {
         modelReady = true;
-        // نوقف أي أنيميشن عند البداية
         model.setAttribute('animation-mixer', {clip: 'none'});
       });
 
@@ -60,13 +61,24 @@
       }
 
       function playAnim(clipName) {
-        if (!modelReady) return;
+        if (!modelReady) {
+          alert("الموديل لم يكتمل تحميله!");
+          return;
+        }
+        // تجربة تشغيل الأنيميشن
         model.setAttribute('animation-mixer', {
           clip: clipName,
           loop: 'once',
           timeScale: 1,
           repetitions: 1
         });
+        // فحص تشغيل الأنيميشن - اختياري: اعرض رسالة لو الاسم غلط
+        setTimeout(() => {
+          const mixer = model.components['animation-mixer'];
+          if (!mixer.mixer || !mixer.mixer._actions || !mixer.mixer._actions.length) {
+            alert("⚠️ لم يتم العثور على أنيميشن باسم: " + clipName);
+          }
+        }, 500);
       }
     </script>
   </body>
