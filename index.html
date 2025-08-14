@@ -38,11 +38,12 @@
       }
       function playAnim(clipName) {
         const model = document.getElementById('model');
-        let mixer = model.components['animation-mixer'];
-        if (mixer) {
-          mixer.stopAllAction();
-          mixer.playAction(clipName);
-        }
+        // كل ضغطة زر تعيد تعيين الـ animation-mixer بclip مختلف
+        model.setAttribute('animation-mixer', {
+          clip: clipName,
+          loop: 'once',
+          timeScale: 1
+        });
       }
     </script>
   </body>
