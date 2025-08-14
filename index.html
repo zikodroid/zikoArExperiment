@@ -3,7 +3,7 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   </head>
   <body style="margin:0;overflow:hidden;">
-    <!-- أزرار تحكم موضع المجسم -->
+    <!-- أزرار التحكم -->
     <div style="position:fixed;top:10px;left:10px;z-index:999;">
       <button onclick="moveModel(-0.2,0,0)">⬅️</button>
       <button onclick="moveModel(0.2,0,0)">➡️</button>
@@ -11,6 +11,8 @@
       <button onclick="moveModel(0,0,-0.2)">⬆️</button>
       <button onclick="moveModel(0,0.2,0)">🔼</button>
       <button onclick="moveModel(0,-0.2,0)">🔽</button>
+      <button onclick="playAnim('Mount')">Mount</button>
+      <button onclick="playAnim('Dismount')">Dismount</button>
     </div>
     <a-scene>
       <a-assets>
@@ -20,7 +22,7 @@
         gltf-model="#gltf"
         position="0 1.5 -3"
         scale="1 1 1"
-        animation-mixer>
+        animation-mixer="">
       </a-entity>
       <a-camera position="0 1.6 0"></a-camera>
     </a-scene>
@@ -33,6 +35,14 @@
           y: pos.y + dy,
           z: pos.z + dz
         });
+      }
+      function playAnim(clipName) {
+        const model = document.getElementById('model');
+        let mixer = model.components['animation-mixer'];
+        if (mixer) {
+          mixer.stopAllAction();
+          mixer.playAction(clipName);
+        }
       }
     </script>
   </body>
