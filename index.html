@@ -35,7 +35,7 @@
   </head>
 
   <body style="margin: 0; overflow: hidden;">
-    <div id="ui">
+    <div id="ui" style="display:none;">
       <div class="row" id="animationButtons"></div>
       <div class="row">
         <button id="scaleUp">تكبير</button>
@@ -44,44 +44,57 @@
     </div>
 
     <a-scene
-      vr-mode-ui="enabled: false"
-      webxr="optionalFeatures: hit-test; requiredFeatures: hit-test;"
       xr-mode="immersive-ar"
-      device-orientation-permission-ui="enabled: true"
+      webxr="requiredFeatures: hit-test;"
       embedded
       renderer="colorManagement: true; physicallyCorrectLights: true;"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: true"
     >
-      <!-- الراي كاست لتحديد أماكن الضغط -->
-      <a-entity id="raycaster" raycaster="objects: .clickable" cursor="fuse: false; rayOrigin: mouse"></a-entity>
-
-      <!-- الكاميرا -->
-      <a-camera camera position="0 1.6 0" look-controls></a-camera>
-
-      <!-- كائن ديناميكي لعرض المجسم -->
-      <a-entity id="wrapper" visible="false" scale="1 1 1" class="clickable">
-        <a-entity
-          id="model"
-          gltf-model="model.glb"
-          animation-mixer
-        ></a-entity>
+      <!-- نقطة الإظهار -->
+      <a-entity id="reticle"
+                visible="false"
+                ar-hit-test="enabled: true"
+                geometry="primitive: ring; radiusInner: 0.05; radiusOuter: 0.06;"
+                material="color: green; shader: flat"
+                position="0 0 -1">
       </a-entity>
 
-      <!-- نظام AR hit test -->
-      <a-entity ar-hit-test="target:#wrapper; autoPlace: false;"></a-entity>
+      <!-- الكاميرا -->
+      <a-camera></a-camera>
     </a-scene>
 
     <script>
-      const model = document.querySelector("#model");
-      const wrapper = document.querySelector("#wrapper");
-      const animBtns = document.querySelector("#animationButtons");
+      let modelPlaced = false;
+      const ui = document.querySelector("#ui");
+      const reticle = document.querySelector("#reticle");
 
-      // تشغيل الأنيميشنات حسب المحتوى داخل GLB
-      model.addEventListener("model-loaded", () => {
+      // حمل النموذج بدون إضافته للمشهد مباشرة
+      let modelWrapper = document.createElement("a-entity");
+      modelWrapper.setAttribute("scale", "1 1 1");
+      modelWrapper.setAttribute("visible", "false");
+
+      let model = document.createElement("a-entity");
+      model.setAttribute("gltf-model", "model.glb");
+      model.setAttribute("animation-mixer", "");
+      modelWrapper.appendChild(model);
+      document.querySelector("a-scene").appendChild(modelWrapper);
+
+      // أول لمسة على reticle → ضيف النموذج بالمكان المحدد
+      document.body.addEventListener("click", () => {
+        if (!reticle.object3D.visible || modelPlaced) return;
+
+        modelWrapper.setAttribute("position", reticle.getAttribute("position"));
+        modelWrapper.setAttribute("visible", "true");
+        modelPlaced = true;
+        ui.style.display = "flex"; // أظهر الواجهة
+        createAnimationButtons();
+      });
+
+      // أنشئ أزرار الأنيميشنات تلقائياً
+      function createAnimationButtons() {
+        const animBtns = document.querySelector("#animationButtons");
         const clips = model.components["gltf-model"].model.animations;
-        if (!clips || clips.length === 0) {
-          alert("❌ لا توجد أنيميشنات داخل هذا الملف.");
-          return;
-        }
 
         clips.forEach((clip) => {
           const name = clip.name;
@@ -98,34 +111,26 @@
           });
           animBtns.appendChild(btn);
         });
-      });
 
-      // تكبير
-      document.querySelector("#scaleUp").addEventListener("click", () => {
-        const s = wrapper.getAttribute("scale");
-        wrapper.setAttribute("scale", {
-          x: s.x + 0.1,
-          y: s.y + 0.1,
-          z: s.z + 0.1
+        // تحكم بالحجم
+        document.querySelector("#scaleUp").addEventListener("click", () => {
+          const s = modelWrapper.getAttribute("scale");
+          modelWrapper.setAttribute("scale", {
+            x: s.x + 0.1,
+            y: s.y + 0.1,
+            z: s.z + 0.1
+          });
         });
-      });
 
-      // تصغير
-      document.querySelector("#scaleDown").addEventListener("click", () => {
-        const s = wrapper.getAttribute("scale");
-        wrapper.setAttribute("scale", {
-          x: Math.max(0.1, s.x - 0.1),
-          y: Math.max(0.1, s.y - 0.1),
-          z: Math.max(0.1, s.z - 0.1)
+        document.querySelector("#scaleDown").addEventListener("click", () => {
+          const s = modelWrapper.getAttribute("scale");
+          modelWrapper.setAttribute("scale", {
+            x: Math.max(0.1, s.x - 0.1),
+            y: Math.max(0.1, s.y - 0.1),
+            z: Math.max(0.1, s.z - 0.1)
+          });
         });
-      });
-
-      // إظهار المجسم عند أول ضغطة على السطح
-      document.body.addEventListener("click", () => {
-        if (!wrapper.getAttribute("visible")) {
-          wrapper.setAttribute("visible", "true");
-        }
-      });
+      }
     </script>
   </body>
 </html>
