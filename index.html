@@ -1,136 +1,68 @@
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-ar-hit-test@1.0.0/dist/aframe-ar-hit-test.min.js"></script>
-    <style>
-      #ui {
-        position: fixed;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        align-items: center;
-      }
-      .row {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-      button {
-        font-size: 14px;
-        padding: 8px 14px;
-        border-radius: 8px;
-        border: none;
-        background-color: rgba(0, 0, 0, 0.6);
-        color: white;
-        cursor: pointer;
-      }
-    </style>
   </head>
+  <body>
+    <a-scene>
+      <!-- الكاميرا -->
+      <a-entity camera position="0 1.6 3"></a-entity>
 
-  <body style="margin: 0; overflow: hidden;">
-    <div id="ui" style="display:none;">
-      <div class="row" id="animationButtons"></div>
-      <div class="row">
-        <button id="scaleUp">تكبير</button>
-        <button id="scaleDown">تصغير</button>
-      </div>
-    </div>
+      <!-- المجسم -->
+      <a-entity id="model" gltf-model="model.glb" scale="1 1 1" position="0 0 -3" animation-mixer></a-entity>
 
-    <a-scene
-      xr-mode="immersive-ar"
-      webxr="requiredFeatures: hit-test;"
-      embedded
-      renderer="colorManagement: true; physicallyCorrectLights: true;"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: true"
-    >
-      <!-- نقطة الإظهار -->
-      <a-entity id="reticle"
-                visible="false"
-                ar-hit-test="enabled: true"
-                geometry="primitive: ring; radiusInner: 0.05; radiusOuter: 0.06;"
-                material="color: green; shader: flat"
-                position="0 0 -1">
+      <!-- أزرار تحريك الجسم -->
+      <a-entity id="controls-move" position="0 1.5 -1.5">
+        <a-plane id="btn-forward" color="#ccc" width="0.3" height="0.2" position="0 0.5 0"
+                 text="value: ↑; align: center" class="clickable"></a-plane>
+        <a-plane id="btn-back" color="#ccc" width="0.3" height="0.2" position="0 -0.5 0"
+                 text="value: ↓; align: center" class="clickable"></a-plane>
+        <a-plane id="btn-left" color="#ccc" width="0.3" height="0.2" position="-0.4 0 0"
+                 text="value: ←; align: center" class="clickable"></a-plane>
+        <a-plane id="btn-right" color="#ccc" width="0.3" height="0.2" position="0.4 0 0"
+                 text="value: →; align: center" class="clickable"></a-plane>
+        <a-plane id="btn-up" color="#ccc" width="0.3" height="0.2" position="0 0.1 0.1"
+                 text="value: ↑↑; align: center" class="clickable"></a-plane>
+        <a-plane id="btn-down" color="#ccc" width="0.3" height="0.2" position="0 -0.1 0.1"
+                 text="value: ↓↓; align: center" class="clickable"></a-plane>
       </a-entity>
 
-      <!-- الكاميرا -->
-      <a-camera></a-camera>
+      <!-- أزرار الأنيميشن -->
+      <a-entity id="controls-anim" position="0 0.7 -1.5">
+        <a-plane id="btnMount" color="#4CAF50" width="0.6" height="0.2" position="0 0.2 0"
+                 text="value: Mount; align: center" class="clickable"></a-plane>
+        <a-plane id="btnDismount" color="#F44336" width="0.6" height="0.2" position="0 -0.2 0"
+                 text="value: Dismount; align: center" class="clickable"></a-plane>
+      </a-entity>
+
+      <script>
+        // تحريك المجسم
+        const step = 0.2;
+        const model = document.querySelector('#model');
+
+        function move(dx, dy, dz) {
+          let pos = model.getAttribute('position');
+          model.setAttribute('position', {
+            x: pos.x + dx,
+            y: pos.y + dy,
+            z: pos.z + dz
+          });
+        }
+
+        document.querySelector('#btn-forward').addEventListener('click', () => move(0, 0, -step));
+        document.querySelector('#btn-back').addEventListener('click', () => move(0, 0, step));
+        document.querySelector('#btn-left').addEventListener('click', () => move(-step, 0, 0));
+        document.querySelector('#btn-right').addEventListener('click', () => move(step, 0, 0));
+        document.querySelector('#btn-up').addEventListener('click', () => move(0, step, 0));
+        document.querySelector('#btn-down').addEventListener('click', () => move(0, -step, 0));
+
+        // الأنيميشن
+        document.querySelector('#btnMount').addEventListener('click', () => {
+          model.setAttribute('animation-mixer', {clip: 'Mount', loop: 'once'});
+        });
+        document.querySelector('#btnDismount').addEventListener('click', () => {
+          model.setAttribute('animation-mixer', {clip: 'Dismount', loop: 'once'});
+        });
+      </script>
     </a-scene>
-
-    <script>
-      let modelPlaced = false;
-      const ui = document.querySelector("#ui");
-      const reticle = document.querySelector("#reticle");
-
-      // حمل النموذج بدون إضافته للمشهد مباشرة
-      let modelWrapper = document.createElement("a-entity");
-      modelWrapper.setAttribute("scale", "1 1 1");
-      modelWrapper.setAttribute("visible", "false");
-
-      let model = document.createElement("a-entity");
-      model.setAttribute("gltf-model", "model.glb");
-      model.setAttribute("animation-mixer", "");
-      modelWrapper.appendChild(model);
-      document.querySelector("a-scene").appendChild(modelWrapper);
-
-      // أول لمسة على reticle → ضيف النموذج بالمكان المحدد
-      document.body.addEventListener("click", () => {
-        if (!reticle.object3D.visible || modelPlaced) return;
-
-        modelWrapper.setAttribute("position", reticle.getAttribute("position"));
-        modelWrapper.setAttribute("visible", "true");
-        modelPlaced = true;
-        ui.style.display = "flex"; // أظهر الواجهة
-        createAnimationButtons();
-      });
-
-      // أنشئ أزرار الأنيميشنات تلقائياً
-      function createAnimationButtons() {
-        const animBtns = document.querySelector("#animationButtons");
-        const clips = model.components["gltf-model"].model.animations;
-
-        clips.forEach((clip) => {
-          const name = clip.name;
-          const btn = document.createElement("button");
-          btn.textContent = "تشغيل " + name;
-          btn.addEventListener("click", () => {
-            model.removeAttribute("animation-mixer");
-            setTimeout(() => {
-              model.setAttribute("animation-mixer", {
-                clip: name,
-                loop: "once"
-              });
-            }, 100);
-          });
-          animBtns.appendChild(btn);
-        });
-
-        // تحكم بالحجم
-        document.querySelector("#scaleUp").addEventListener("click", () => {
-          const s = modelWrapper.getAttribute("scale");
-          modelWrapper.setAttribute("scale", {
-            x: s.x + 0.1,
-            y: s.y + 0.1,
-            z: s.z + 0.1
-          });
-        });
-
-        document.querySelector("#scaleDown").addEventListener("click", () => {
-          const s = modelWrapper.getAttribute("scale");
-          modelWrapper.setAttribute("scale", {
-            x: Math.max(0.1, s.x - 0.1),
-            y: Math.max(0.1, s.y - 0.1),
-            z: Math.max(0.1, s.z - 0.1)
-          });
-        });
-      }
-    </script>
   </body>
 </html>
