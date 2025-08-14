@@ -3,6 +3,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-ar-hit-test@1.0.0/dist/aframe-ar-hit-test.min.js"></script>
     <style>
       #ui {
         position: fixed;
@@ -35,9 +36,7 @@
 
   <body style="margin: 0; overflow: hidden;">
     <div id="ui">
-      <div class="row" id="animationButtons">
-        <!-- أزرار الأنيميشنات تُضاف تلقائياً -->
-      </div>
+      <div class="row" id="animationButtons"></div>
       <div class="row">
         <button id="scaleUp">تكبير</button>
         <button id="scaleDown">تصغير</button>
@@ -45,14 +44,21 @@
     </div>
 
     <a-scene
-      embedded
       vr-mode-ui="enabled: false"
+      webxr="optionalFeatures: hit-test; requiredFeatures: hit-test;"
+      xr-mode="immersive-ar"
       device-orientation-permission-ui="enabled: true"
-      webxr="optionalFeatures: hit-test; requiredFeatures: local-floor;"
+      embedded
       renderer="colorManagement: true; physicallyCorrectLights: true;"
     >
-      <!-- تغليف للتحكم -->
-      <a-entity id="wrapper" position="0 1 -4" scale="1 1 1">
+      <!-- الراي كاست لتحديد أماكن الضغط -->
+      <a-entity id="raycaster" raycaster="objects: .clickable" cursor="fuse: false; rayOrigin: mouse"></a-entity>
+
+      <!-- الكاميرا -->
+      <a-camera camera position="0 1.6 0" look-controls></a-camera>
+
+      <!-- كائن ديناميكي لعرض المجسم -->
+      <a-entity id="wrapper" visible="false" scale="1 1 1" class="clickable">
         <a-entity
           id="model"
           gltf-model="model.glb"
@@ -60,8 +66,8 @@
         ></a-entity>
       </a-entity>
 
-      <!-- الكاميرا مع orbit-controls -->
-      <a-entity camera look-controls orbit-controls="target: 0 1 0; enableZoom: true;"></a-entity>
+      <!-- نظام AR hit test -->
+      <a-entity ar-hit-test="target:#wrapper; autoPlace: false;"></a-entity>
     </a-scene>
 
     <script>
@@ -69,7 +75,7 @@
       const wrapper = document.querySelector("#wrapper");
       const animBtns = document.querySelector("#animationButtons");
 
-      // بعد تحميل الموديل
+      // تشغيل الأنيميشنات حسب المحتوى داخل GLB
       model.addEventListener("model-loaded", () => {
         const clips = model.components["gltf-model"].model.animations;
         if (!clips || clips.length === 0) {
@@ -113,7 +119,13 @@
           z: Math.max(0.1, s.z - 0.1)
         });
       });
+
+      // إظهار المجسم عند أول ضغطة على السطح
+      document.body.addEventListener("click", () => {
+        if (!wrapper.getAttribute("visible")) {
+          wrapper.setAttribute("visible", "true");
+        }
+      });
     </script>
   </body>
 </html>
-
