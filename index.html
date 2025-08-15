@@ -18,6 +18,7 @@
       <button onclick="moveModel(0,-0.2,0)">🔽</button>
       <button onclick="playAnim('Mount')">Mount</button>
       <button onclick="playAnim('Dismount')">Dismount</button>
+      <button onclick="showAnims()">عرض أسماء الأنيميشنات</button>
     </div>
     <a-scene background="color: #e6e6e6">
       <a-assets>
@@ -34,12 +35,11 @@
       </a-entity>
     </a-scene>
     <script>
-      // لا تكرر let modelReady!
       let modelReady = false;
       const model = document.getElementById('model');
       model.addEventListener('model-loaded', function () {
         modelReady = true;
-        model.removeAttribute('animation-mixer');
+        model.removeAttribute('animation-mixer'); // نوقف أي أنيميشن تلقائي
       });
 
       function moveModel(dx,dy,dz) {
@@ -63,9 +63,34 @@
           timeScale: 1,
           repetitions: 1
         });
+        // للتأكد، اطبع الاسم للكونسول بعد التنفيذ
+        setTimeout(() => {
+          let mixer = model.components['animation-mixer'];
+          if (!mixer || !mixer.mixer || mixer.mixer._actions.length === 0) {
+            alert("⚠️ لم يتم تشغيل الأنيميشن: " + clipName + "\nتحقق من الاسم أو الملف.");
+          }
+        }, 500);
       }
 
-      // تبديل تلقائي بين look-controls و orbit-controls
+      function showAnims() {
+        if (!modelReady) {
+          alert("الموديل لم يتم تحميله بعد!");
+          return;
+        }
+        let anims = [];
+        try {
+          anims = model.components['gltf-model'].model.animations || [];
+        } catch(e) {}
+        if (!anims || anims.length === 0) {
+          alert("⚠️ لا يوجد أنيميشنات يمكن قراءتها من الكود!\n\nإذا رأيتها في gltf-viewer لكن لم تظهر هنا، المشكلة من طريقة تصدير الملف وليس الكود.");
+        } else {
+          let msg = "أسماء الأنيميشنات الفعلية في ملف glb:\n";
+          for (let a of anims) msg += "- " + a.name + "\n";
+          alert(msg);
+        }
+      }
+
+      // تبديل تلقائي بين look-controls على الموبايل و orbit-controls على الكمبيوتر
       const cam = document.getElementById('mainCamera');
       if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
         cam.setAttribute('look-controls', '');
