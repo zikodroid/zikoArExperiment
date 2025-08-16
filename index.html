@@ -1,67 +1,52 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <style>
-      html, body { margin:0; height:100%; overflow:hidden; }
-      canvas { touch-action: none; pointer-events: auto; }
-      #ui { position:fixed;top:10px;left:10px;z-index:999; }
-      #move-ui { position:fixed;top:60px;left:10px;z-index:999; display:flex; flex-direction:column;gap:3px;}
-      #move-ui-row { display:flex; flex-direction:row; gap:3px; }
-      button { font-size:16px; padding:6px 12px; border-radius:8px; border:1px solid #ccc; background:#f2f2f2; cursor:pointer;}
-      button:hover { background:#e0e0e0; }
-      #bgvideo { display:none; }
-    </style>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
-    <script src="https://unpkg.com/aframe-orbit-controls@1.3.2/dist/aframe-orbit-controls.min.js"></script>
   </head>
   <body>
-    <!-- واجهة التحكم -->
-    <div id="ui">
+    <a-scene
+      webxr="optionalFeatures: hit-test;"
+      xr-mode="immersive-ar"
+      arjs-overlay
+      vr-mode-ui="enabled: false"
+      renderer="colorManagement: true; physicallyCorrectLights: true"
+      device-orientation-permission-ui="enabled: true"
+      embedded
+      style="position:fixed;top:0;left:0;width:100vw;height:100vh;"
+    >
+      <!-- المجسم ثلاثي الأبعاد -->
+      <a-entity id="model"
+        gltf-model="model.glb"
+        scale="1 1 1"
+        visible="false">
+      </a-entity>
+      <a-camera id="cam"></a-camera>
+    </a-scene>
+    <div style="position:fixed;top:10px;left:10px;z-index:999;">
       <button onclick="playAnim('Mount')">Mount</button>
       <button onclick="playAnim('Dismount')">Dismount</button>
       <button onclick="showAnims()">عرض أسماء الأنيميشنات</button>
     </div>
-    <div id="move-ui">
-      <div id="move-ui-row">
-        <button onclick="moveModel(0,0,-0.1)">⬆️</button>
-      </div>
-      <div id="move-ui-row">
-        <button onclick="moveModel(-0.1,0,0)">⬅️</button>
-        <button onclick="moveModel(0,0.1,0)">⬆️‍</button>
-        <button onclick="moveModel(0.1,0,0)">➡️</button>
-      </div>
-      <div id="move-ui-row">
-        <button onclick="moveModel(0,0,0.1)">⬇️</button>
-      </div>
-      <div id="move-ui-row">
-        <button onclick="moveModel(0,-0.1,0)">⬇️‍</button>
-      </div>
-    </div>
-    <!-- فيديو الكاميرا الخلفية -->
-    <video id="bgvideo" autoplay playsinline muted></video>
-    <a-scene background="color: #000">
-      <a-assets>
-        <a-asset-item id="gltf" src="model.glb"></a-asset-item>
-      </a-assets>
-      <!-- خلفية الكاميرا -->
-      <a-plane id="bg" position="0 1.5 -2" width="8" height="6" material="shader: flat; src: #bgvideo"></a-plane>
-      <a-entity id="model"
-        gltf-model="#gltf"
-        position="0 1.5 0"
-        scale="1 1 1">
-      </a-entity>
-      <a-entity id="mainCamera"
-        camera
-        position="0 1.5 4">
-      </a-entity>
-    </a-scene>
     <script>
-      let modelReady = false;
-      const model = document.getElementById('model');
+      // بعد دخول وضع AR، ضع المجسم مكان لمس المستخدم (أو وسط الشاشة أول مرة)
+      let placed = false, model, modelReady = false;
+      document.querySelector('a-scene').addEventListener('enter-vr', function () {
+        const sceneEl = this;
+        sceneEl.addEventListener('ar-hit-test-select', function (ev) {
+          if (!placed && modelReady) {
+            const pos = ev.detail.position;
+            model.setAttribute('position', pos);
+            model.setAttribute('visible', true);
+            placed = true;
+          }
+        });
+      });
+
+      model = document.getElementById('model');
       model.addEventListener('model-loaded', function () {
         modelReady = true;
         model.removeAttribute('animation-mixer');
+        // أول ظهور: يظهر مخفي حتى يحدد المكان المستخدم (لمسة على الأرض)
       });
 
       function playAnim(clipName) {
@@ -101,41 +86,6 @@
           alert(msg);
         }
       }
-
-      // تحريك المجسم
-      function moveModel(dx, dy, dz) {
-        if (!modelReady) return;
-        let pos = model.getAttribute('position');
-        pos.x += dx; pos.y += dy; pos.z += dz;
-        model.setAttribute('position', pos);
-      }
-
-      // تبديل تلقائي بين look-controls و orbit-controls
-      const cam = document.getElementById('mainCamera');
-      if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        cam.setAttribute('look-controls', '');
-      } else {
-        cam.setAttribute('orbit-controls', `
-          target: 0 1.5 0;
-          enableDamping: true;
-          dampingFactor: 0.12;
-          rotateSpeed: 0.9;
-          zoomSpeed: 1.2;
-          panSpeed: 1.0;
-          minDistance: 1;
-          maxDistance: 20;
-          screenSpacePanning: true;
-        `);
-      }
-
-      // تشغيل الكاميرا الخلفية للموبايل كخلفية للمشهد
-      navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(function(stream){
-        const video = document.getElementById('bgvideo');
-        video.srcObject = stream;
-        video.play();
-      }).catch(err=>{
-        alert("لم يتم السماح بالكاميرا أو الجهاز لا يدعم getUserMedia");
-      });
     </script>
   </body>
 </html>
