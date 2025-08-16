@@ -1,136 +1,55 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <style>
       html, body { margin:0; height:100%; overflow:hidden; }
-      #ui { position:fixed;top:10px;left:10px;z-index:999; }
-      #move-ui { position:fixed;top:60px;left:10px;z-index:999; display:flex; flex-direction:column;gap:3px;}
-      #move-ui-row { display:flex; flex-direction:row; gap:3px; }
-      button { font-size:16px; padding:6px 12px; border-radius:8px; border:1px solid #ccc; background:#f2f2f2; cursor:pointer;}
-      button:hover { background:#e0e0e0; }
       #ar-btn { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:1001; font-size:18px; padding:15px 32px; background:#1976d2; color:#fff; border-radius:12px; border:none; box-shadow:0 4px 12px #2225;}
     </style>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   </head>
   <body>
-    <div id="ui">
-      <button onclick="playAnim('Mount')">Mount</button>
-      <button onclick="playAnim('Dismount')">Dismount</button>
-      <button onclick="showAnims()">عرض أسماء الأنيميشنات</button>
-    </div>
-    <div id="move-ui">
-      <div id="move-ui-row">
-        <button onclick="moveModel(0,0,-0.1)">⬆️</button>
-      </div>
-      <div id="move-ui-row">
-        <button onclick="moveModel(-0.1,0,0)">⬅️</button>
-        <button onclick="moveModel(0,0.1,0)">⬆️‍</button>
-        <button onclick="moveModel(0.1,0,0)">➡️</button>
-      </div>
-      <div id="move-ui-row">
-        <button onclick="moveModel(0,0,0.1)">⬇️</button>
-      </div>
-      <div id="move-ui-row">
-        <button onclick="moveModel(0,-0.1,0)">⬇️‍</button>
-      </div>
-    </div>
     <button id="ar-btn" onclick="activateAR()">تشغيل الواقع المعزز</button>
     <a-scene 
-      id="myscene"
       renderer="colorManagement: true; physicallyCorrectLights: true"
       xr-mode="immersive-ar"
       webxr="optionalFeatures: hit-test;"
       vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: true"
       embedded
       style="position:fixed;top:0;left:0;width:100vw;height:100vh;">
       <a-assets>
         <a-asset-item id="gltf" src="model.glb"></a-asset-item>
       </a-assets>
-      <a-entity id="model"
-        gltf-model="#gltf"
-        visible="false"
-        scale="1 1 1">
-      </a-entity>
-      <a-entity id="mainCamera"
-        camera
-        position="0 1.5 4">
-      </a-entity>
+      <!-- الموديل مخفي بالبداية -->
+      <a-entity id="model" gltf-model="#gltf" visible="false" scale="1 1 1"></a-entity>
+      <a-entity camera></a-entity>
     </a-scene>
     <script>
       let modelReady = false, placed = false;
       const model = document.getElementById('model');
-      const scene = document.getElementById('myscene');
-
+      const scene = document.querySelector('a-scene');
       model.addEventListener('model-loaded', function () {
         modelReady = true;
         model.removeAttribute('animation-mixer');
       });
 
-      function playAnim(clipName) {
-        if (!modelReady) {
-          alert("الموديل لم يتم تحميله بعد!");
-          return;
-        }
-        model.setAttribute('animation-mixer', {
-          clip: clipName,
-          loop: 'once',
-          timeScale: 1,
-          repetitions: 1,
-          root: true
-        });
-        setTimeout(() => {
-          let mixer = model.components['animation-mixer'];
-          if (!mixer || !mixer.mixer || mixer.mixer._actions.length === 0) {
-            alert("⚠️ لم يتم تشغيل الأنيميشن: " + clipName + "\nتحقق من الاسم أو الملف.");
-          }
-        }, 500);
-      }
-
-      function showAnims() {
-        if (!modelReady) {
-          alert("الموديل لم يتم تحميله بعد!");
-          return;
-        }
-        let anims = [];
-        try {
-          anims = model.components['gltf-model'].model.animations || [];
-        } catch(e) {}
-        if (!anims || anims.length === 0) {
-          alert("⚠️ لا يوجد أنيميشنات يمكن قراءتها من الكود!\n\nإذا رأيتها في gltf-viewer لكن لم تظهر هنا، المشكلة من طريقة تصدير الملف وليس الكود.");
-        } else {
-          let msg = "أسماء الأنيميشنات الفعلية في ملف glb:\n";
-          for (let a of anims) msg += "- " + a.name + "\n";
-          alert(msg);
-        }
-      }
-
-      function moveModel(dx, dy, dz) {
-        if (!modelReady) return;
-        let pos = model.getAttribute('position');
-        pos.x += dx; pos.y += dy; pos.z += dz;
-        model.setAttribute('position', pos);
-      }
-
+      // عند تفعيل AR
       function activateAR() {
-        // التحقق من دعم WebXR AR الحقيقي
         if (navigator.xr && navigator.xr.isSessionSupported) {
           navigator.xr.isSessionSupported('immersive-ar').then(function(supported) {
             if (supported) {
               document.getElementById('ar-btn').style.display = 'none';
-              // إضافة حدث لتحديد مكان وضع المجسم باللمس عند بدء AR فقط
               placed = false;
-              scene.addEventListener('enter-vr', function() {
-                scene.addEventListener('ar-hit-test-select', function(ev) {
+              scene.addEventListener('enter-vr', function () {
+                scene.addEventListener('ar-hit-test-select', function (ev) {
                   if (!placed && modelReady) {
-                    const pos = ev.detail.position;
-                    model.setAttribute('position', pos);
+                    // وضع الموديل في موقع لمس الأرضية لأول مرة
+                    model.setAttribute('position', ev.detail.position);
                     model.setAttribute('visible', true);
                     placed = true;
                   }
                 });
-              });
-              // دخول وضع AR الحقيقي
+              }, { once: true });
+              // دخول وضع AR
               scene.enterAR();
             } else {
               alert("جهازك لا يدعم الواقع المعزز WebXR AR الحقيقي.");
