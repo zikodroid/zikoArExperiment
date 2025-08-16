@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AR Marker Demo</title>
+    <title>Mein AR Marker</title>
     <style>
       html, body { margin:0; height:100%; overflow:hidden; }
       .ui-controls {
@@ -14,16 +14,13 @@
         gap: 4px;
         display: none; /* تبدأ مخفية */
       }
-      /* لجعل الزرار تظهر فوق الكاميرا */
-      .arjs-video { z-index: 0 !important; }
-      canvas { z-index: 1 !important; }
     </style>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
   </head>
   <body>
-    <!-- أزرار التحكم (مخفية بالبداية) -->
+    <!-- واجهة المستخدم -->
     <div class="ui-controls" id="ui-controls">
       <button onclick="moveModel(-0.2,0,0)">←</button>
       <button onclick="moveModel(0.2,0,0)">→</button>
@@ -44,8 +41,8 @@
       <a-assets>
         <a-asset-item id="gltf" src="model.glb"></a-asset-item>
       </a-assets>
-      <!-- يظهر المجسم فقط عند رصد الماركر -->
-      <a-marker type="Pattern" url="https://github.com/zikodroid/zikoArExperiment/blob/main/pattern-QR%202.patt"> 
+      <!-- استخدم رابط ملف الماركر الخاص بك هنا -->
+      <a-marker type="pattern" url="https://github.com/zikodroid/zikoArExperiment/blob/main/pattern-QR%202.patt">
         <a-entity id="model"
           gltf-model="#gltf"
           position="0 0 0"
@@ -67,7 +64,7 @@
         model.removeAttribute('animation-mixer');
       });
 
-      // إظهار وإخفاء واجهة المستخدم والمجسم بناءً على وجود الماركر
+      // إظهار وإخفاء واجهة المستخدم والمجسم عند رصد أو فقدان الماركر
       marker.addEventListener('markerFound', () => {
         if (modelReady) model.setAttribute('visible', 'true');
         ui.style.display = 'flex';
@@ -121,4 +118,5 @@
     </script>
   </body>
 </html>
+
 
