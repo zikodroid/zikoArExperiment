@@ -26,16 +26,14 @@
     <script src="https://unpkg.com/aframe-orbit-controls@1.3.2/dist/aframe-orbit-controls.min.js"></script>
   </head>
   <body>
-    <!-- خلفية الكاميرا (الخلفية/الأمامية حسب الإعداد) -->
     <video id="cam-bg" autoplay playsinline muted></video>
-    <!-- أزرار التحكم (بالألمانية حسب طلبك) -->
     <div class="ui-controls">
-      <button onclick="moveModel(-0.2,0,0)">Links</button>
-      <button onclick="moveModel(0.2,0,0)">Rechts</button>
-      <button onclick="moveModel(0,0,0.2)">Nach hinten</button>
-      <button onclick="moveModel(0,0,-0.2)">Nach vorne</button>
-      <button onclick="moveModel(0,0.2,0)">Nach oben</button>
-      <button onclick="moveModel(0,-0.2,0)">Nach unten</button>
+      <button onclick="moveModel(-0.2,0,0)">←</button>
+      <button onclick="moveModel(0.2,0,0)">→</button>
+      <button onclick="moveModel(0,0,0.2)">⬇️</button>
+      <button onclick="moveModel(0,0,-0.2)">⬆️</button>
+      <button onclick="moveModel(0,0.2,0)">⬆️↑</button>
+      <button onclick="moveModel(0,-0.2,0)">⬇️↓</button>
       <button onclick="playAnim('Mount')">Montieren</button>
       <button onclick="playAnim('Dismount')">Demontieren</button>
       <button onclick="showAnims()">Animationen anzeigen</button>
@@ -55,7 +53,6 @@
       </a-entity>
     </a-scene>
     <script>
-      // كاميرا خلفية دائماً إذا ممكن (وإلا الأمامية)
       const video = document.getElementById('cam-bg');
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({
@@ -65,7 +62,6 @@
           video.srcObject = stream;
         })
         .catch(function(err) {
-          // إذا لم تتوفر الخلفية، جرّب أي كاميرا متاحة
           navigator.mediaDevices.getUserMedia({video: true})
             .then(function(stream) { video.srcObject = stream; })
             .catch(function(err) {
@@ -132,7 +128,6 @@
         }
       }
 
-      // التحكم بالكاميرا: Orbit للكمبيوتر، LookControls للموبايل
       const cam = document.getElementById('mainCamera');
       if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
         cam.setAttribute('look-controls', '');
