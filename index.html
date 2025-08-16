@@ -1,90 +1,53 @@
-<!DOCTYPE html>
 <html>
   <head>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  </head>
-  <body>
-    <a-scene
-      webxr="optionalFeatures: hit-test;"
-      xr-mode="immersive-ar"
-      arjs-overlay
-      vr-mode-ui="enabled: false"
-      renderer="colorManagement: true; physicallyCorrectLights: true"
-      device-orientation-permission-ui="enabled: true"
-      embedded
-      style="position:fixed;top:0;left:0;width:100vw;height:100vh;"
-    >
-      <!-- المجسم ثلاثي الأبعاد -->
-      <a-entity id="model"
-        gltf-model="model.glb"
-        scale="1 1 1"
-        visible="false">
-      </a-entity>
-      <a-camera id="cam"></a-camera>
-    </a-scene>
-    <div style="position:fixed;top:10px;left:10px;z-index:999;">
-      <button onclick="playAnim('Mount')">Mount</button>
-      <button onclick="playAnim('Dismount')">Dismount</button>
-      <button onclick="showAnims()">عرض أسماء الأنيميشنات</button>
-    </div>
-    <script>
-      // بعد دخول وضع AR، ضع المجسم مكان لمس المستخدم (أو وسط الشاشة أول مرة)
-      let placed = false, model, modelReady = false;
-      document.querySelector('a-scene').addEventListener('enter-vr', function () {
-        const sceneEl = this;
-        sceneEl.addEventListener('ar-hit-test-select', function (ev) {
-          if (!placed && modelReady) {
-            const pos = ev.detail.position;
-            model.setAttribute('position', pos);
-            model.setAttribute('visible', true);
-            placed = true;
-          }
-        });
-      });
-
-      model = document.getElementById('model');
-      model.addEventListener('model-loaded', function () {
-        modelReady = true;
-        model.removeAttribute('animation-mixer');
-        // أول ظهور: يظهر مخفي حتى يحدد المكان المستخدم (لمسة على الأرض)
-      });
-
-      function playAnim(clipName) {
-        if (!modelReady) {
-          alert("الموديل لم يتم تحميله بعد!");
-          return;
-        }
-        model.setAttribute('animation-mixer', {
-          clip: clipName,
-          loop: 'once',
-          timeScale: 1,
-          repetitions: 1,
-          root: true
-        });
-        setTimeout(() => {
-          let mixer = model.components['animation-mixer'];
-          if (!mixer || !mixer.mixer || mixer.mixer._actions.length === 0) {
-            alert("⚠️ لم يتم تشغيل الأنيميشن: " + clipName + "\nتحقق من الاسم أو الملف.");
-          }
-        }, 500);
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <style>
+      model-viewer { width: 100vw; height: 100vh; }
+      .ar-controls {
+        position: absolute; top: 16px; left: 50%; transform:translateX(-50%);
+        z-index: 10; display: flex; gap: 12px;
       }
-
-      function showAnims() {
-        if (!modelReady) {
-          alert("الموديل لم يتم تحميله بعد!");
+      .ar-controls button {
+        padding: 10px 20px; border-radius: 8px; border: none; font-size: 1em; background: #1976d2; color: #fff; font-weight: bold; cursor: pointer;
+      }
+    </style>
+  </head>
+  <body style="margin:0;overflow:hidden;">
+    <div class="ar-controls">
+      <button onclick="playAnim(0)">Mount</button>
+      <button onclick="playAnim(1)">Dismount</button>
+      <button onclick="showAnims()">عرض الأنيميشنات</button>
+    </div>
+    <model-viewer id="mv"
+      src="model.glb"
+      ar
+      ar-modes="webxr scene-viewer quick-look"
+      camera-controls
+      auto-rotate
+      exposure="1"
+      style="background: #000;">
+      <button slot="ar-button" style="padding:18px 40px;background:#388e3c;color:white;font-size:1.1em;border-radius:10px;border:none;">AR starten</button>
+    </model-viewer>
+    <script>
+      const mv = document.getElementById('mv');
+      function playAnim(idx) {
+        // متوفر فقط إذا ملفك فيه أكثر من حركة
+        const anims = mv.availableAnimations || [];
+        if (anims.length == 0) {
+          alert("لا يوجد أنيميشنات في الملف");
           return;
         }
-        let anims = [];
-        try {
-          anims = model.components['gltf-model'].model.animations || [];
-        } catch(e) {}
-        if (!anims || anims.length === 0) {
-          alert("⚠️ لا يوجد أنيميشنات يمكن قراءتها من الكود!\n\nإذا رأيتها في gltf-viewer لكن لم تظهر هنا، المشكلة من طريقة تصدير الملف وليس الكود.");
-        } else {
-          let msg = "أسماء الأنيميشنات الفعلية في ملف glb:\n";
-          for (let a of anims) msg += "- " + a.name + "\n";
-          alert(msg);
+        mv.animationName = anims[idx]?.name || anims[0]?.name;
+        mv.currentTime = 0;
+        mv.play();
+      }
+      function showAnims() {
+        const anims = mv.availableAnimations || [];
+        if (anims.length == 0) {
+          alert("لا يوجد أنيميشنات في الملف!");
+          return;
         }
+        alert("Animations:\n" + anims.map(a=>a.name).join('\n'));
       }
     </script>
   </body>
