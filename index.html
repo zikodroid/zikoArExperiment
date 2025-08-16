@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+أنت قلت:
+شوف الكود صحيح <!DOCTYPE html>
 <html>
   <head>
-    <title>Markerless AR mit A-Frame</title>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <title>Mein AR Marker</title>
     <style>
-      html, body { margin:0; overflow:hidden; }
+      html, body { margin:0; height:100%; overflow:hidden; }
       .ui-controls {
         position: fixed;
         top: 10px;
@@ -13,9 +13,12 @@
         display: flex;
         flex-direction: column;
         gap: 4px;
-        display: none; /* مخفية بالبداية */
+        display: none; /* تبدأ مخفية */
       }
     </style>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
   </head>
   <body>
     <!-- واجهة المستخدم -->
@@ -31,45 +34,49 @@
       <button onclick="showAnims()">Animationen anzeigen</button>
     </div>
     <a-scene
-      webxr="requiredFeatures: hit-test;"
-      vr-mode-ui="enabled: false"
       embedded
-      renderer="colorManagement: true; physicallyCorrectLights: true;">
+      arjs="sourceType: webcam; debugUIEnabled: false;"
+      renderer="logarithmicDepthBuffer: true;"
+      vr-mode-ui="enabled: false"
+      >
       <a-assets>
         <a-asset-item id="gltf" src="model.glb"></a-asset-item>
       </a-assets>
-      <!-- المجسم يبدأ مخفي -->
-      <a-entity id="model"
-        gltf-model="#gltf"
-        visible="false"
-        scale="1 1 1">
-      </a-entity>
+      <!-- استخدم رابط ملف الماركر الخاص بك هنا -->
+      <a-marker type="pattern" url="https://raw.githubusercontent.com/zikodroid/zikoArExperiment/main/mymarker.patt">
+        <a-entity id="model"
+          gltf-model="#gltf"
+          position="0 0 0"
+          scale="1 1 1"
+          visible="false">
+        </a-entity>
+      </a-marker>
       <a-entity camera></a-entity>
     </a-scene>
     <script>
       let modelReady = false;
-      let modelPlaced = false;
       const model = document.getElementById('model');
+      const marker = document.querySelector('a-marker');
       const ui = document.getElementById('ui-controls');
 
+      // عند تحميل المجسم
       model.addEventListener('model-loaded', function () {
         modelReady = true;
         model.removeAttribute('animation-mixer');
       });
 
-      // عند الضغط على الأرضية لأول مرة، ضع المجسم وأظهر الواجهة
-      AFRAME.scenes[0].addEventListener('click', function (evt) {
-        if (!modelPlaced && evt.detail && evt.detail.intersection && modelReady) {
-          let p = evt.detail.intersection.point;
-          model.setAttribute('position', `${p.x} ${p.y} ${p.z}`);
-          model.setAttribute('visible', 'true');
-          ui.style.display = 'flex';
-          modelPlaced = true;
-        }
+      // إظهار وإخفاء واجهة المستخدم والمجسم عند رصد أو فقدان الماركر
+      marker.addEventListener('markerFound', () => {
+        if (modelReady) model.setAttribute('visible', 'true');
+        ui.style.display = 'flex';
+      });
+      marker.addEventListener('markerLost', () => {
+        model.setAttribute('visible', 'false');
+        ui.style.display = 'none';
       });
 
       function moveModel(dx,dy,dz) {
-        if (!modelReady || !modelPlaced) return;
+        if (!modelReady) return;
         let pos = model.getAttribute('position');
         model.setAttribute('position', {
           x: pos.x + dx,
@@ -79,8 +86,8 @@
       }
 
       function playAnim(clipName) {
-        if (!modelReady || !modelPlaced) {
-          alert("Das Modell ist noch nicht platziert oder geladen!");
+        if (!modelReady) {
+          alert("Das Modell ist noch nicht geladen!");
           return;
         }
         model.setAttribute('animation-mixer', {
