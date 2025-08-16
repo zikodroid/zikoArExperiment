@@ -1,64 +1,124 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <title>AR Marker Demo</title>
     <style>
       html, body { margin:0; height:100%; overflow:hidden; }
-      #ar-btn { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:1001; font-size:18px; padding:15px 32px; background:#1976d2; color:#fff; border-radius:12px; border:none; box-shadow:0 4px 12px #2225;}
+      .ui-controls {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        display: none; /* تبدأ مخفية */
+      }
+      /* لجعل الزرار تظهر فوق الكاميرا */
+      .arjs-video { z-index: 0 !important; }
+      canvas { z-index: 1 !important; }
     </style>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
   </head>
   <body>
-    <button id="ar-btn" onclick="activateAR()">تشغيل الواقع المعزز</button>
-    <a-scene 
-      renderer="colorManagement: true; physicallyCorrectLights: true"
-      xr-mode="immersive-ar"
-      webxr="optionalFeatures: hit-test;"
-      vr-mode-ui="enabled: false"
+    <!-- أزرار التحكم (مخفية بالبداية) -->
+    <div class="ui-controls" id="ui-controls">
+      <button onclick="moveModel(-0.2,0,0)">←</button>
+      <button onclick="moveModel(0.2,0,0)">→</button>
+      <button onclick="moveModel(0,0,0.2)">⬇️</button>
+      <button onclick="moveModel(0,0,-0.2)">⬆️</button>
+      <button onclick="moveModel(0,0.2,0)">⬆️↑</button>
+      <button onclick="moveModel(0,-0.2,0)">⬇️↓</button>
+      <button onclick="playAnim('Mount')">Montieren</button>
+      <button onclick="playAnim('Dismount')">Demontieren</button>
+      <button onclick="showAnims()">Animationen anzeigen</button>
+    </div>
+    <a-scene
       embedded
-      style="position:fixed;top:0;left:0;width:100vw;height:100vh;">
+      arjs="sourceType: webcam; debugUIEnabled: false;"
+      renderer="logarithmicDepthBuffer: true;"
+      vr-mode-ui="enabled: false"
+      >
       <a-assets>
         <a-asset-item id="gltf" src="model.glb"></a-asset-item>
       </a-assets>
-      <!-- الموديل مخفي بالبداية -->
-      <a-entity id="model" gltf-model="#gltf" visible="false" scale="1 1 1"></a-entity>
+      <!-- يظهر المجسم فقط عند رصد الماركر -->
+      <a-marker id="marker" preset="hiro">
+        <a-entity id="model"
+          gltf-model="#gltf"
+          position="0 0 0"
+          scale="1 1 1"
+          visible="false">
+        </a-entity>
+      </a-marker>
       <a-entity camera></a-entity>
     </a-scene>
     <script>
-      let modelReady = false, placed = false;
+      let modelReady = false;
       const model = document.getElementById('model');
-      const scene = document.querySelector('a-scene');
+      const marker = document.querySelector('a-marker');
+      const ui = document.getElementById('ui-controls');
+
+      // عند تحميل المجسم
       model.addEventListener('model-loaded', function () {
         modelReady = true;
         model.removeAttribute('animation-mixer');
       });
 
-      // عند تفعيل AR
-      function activateAR() {
-        if (navigator.xr && navigator.xr.isSessionSupported) {
-          navigator.xr.isSessionSupported('immersive-ar').then(function(supported) {
-            if (supported) {
-              document.getElementById('ar-btn').style.display = 'none';
-              placed = false;
-              scene.addEventListener('enter-vr', function () {
-                scene.addEventListener('ar-hit-test-select', function (ev) {
-                  if (!placed && modelReady) {
-                    // وضع الموديل في موقع لمس الأرضية لأول مرة
-                    model.setAttribute('position', ev.detail.position);
-                    model.setAttribute('visible', true);
-                    placed = true;
-                  }
-                });
-              }, { once: true });
-              // دخول وضع AR
-              scene.enterAR();
-            } else {
-              alert("جهازك لا يدعم الواقع المعزز WebXR AR الحقيقي.");
-            }
-          });
+      // إظهار وإخفاء واجهة المستخدم والمجسم بناءً على وجود الماركر
+      marker.addEventListener('markerFound', () => {
+        if (modelReady) model.setAttribute('visible', 'true');
+        ui.style.display = 'flex';
+      });
+      marker.addEventListener('markerLost', () => {
+        model.setAttribute('visible', 'false');
+        ui.style.display = 'none';
+      });
+
+      function moveModel(dx,dy,dz) {
+        if (!modelReady) return;
+        let pos = model.getAttribute('position');
+        model.setAttribute('position', {
+          x: pos.x + dx,
+          y: pos.y + dy,
+          z: pos.z + dz
+        });
+      }
+
+      function playAnim(clipName) {
+        if (!modelReady) {
+          alert("Das Modell ist noch nicht geladen!");
+          return;
+        }
+        model.setAttribute('animation-mixer', {
+          clip: clipName,
+          loop: 'once',
+          timeScale: 1,
+          repetitions: 1,
+          root: true
+        });
+      }
+
+      function showAnims() {
+        if (!modelReady) {
+          alert("Das Modell ist noch nicht geladen!");
+          return;
+        }
+        let anims = [];
+        try {
+          anims = model.components['gltf-model'].model.animations || [];
+        } catch(e) {}
+        if (!anims || anims.length === 0) {
+          alert("⚠️ Keine Animationen im Modell gefunden!");
         } else {
-          alert("متصفحك لا يدعم WebXR AR.");
+          let msg = "Animationen im Modell:\n";
+          for (let a of anims) msg += "- " + a.name + "\n";
+          alert(msg);
         }
       }
     </script>
   </body>
 </html>
+
