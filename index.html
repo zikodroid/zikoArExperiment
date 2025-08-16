@@ -1,147 +1,25 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <style>
-      html, body { margin:0; height:100%; overflow:hidden; }
-      body { position: relative; }
-      #cam-bg {
-        position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
-        object-fit: cover;
-        z-index: 0;
-      }
-      .ui-controls {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        z-index: 2;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      canvas { touch-action: none; pointer-events: auto; z-index: 1;}
-    </style>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
-    <script src="https://unpkg.com/aframe-orbit-controls@1.3.2/dist/aframe-orbit-controls.min.js"></script>
-  </head>
-  <body>
-    <!-- فيديو الكاميرا بالخلفية -->
-    <video id="cam-bg" autoplay playsinline muted></video>
-    <!-- أزرار التحكم (نفس الأزرار فقط ترجم النص للألمانية حسب الحاجة) -->
-    <div class="ui-controls">
-      <button onclick="moveModel(-0.2,0,0)">Links</button>
-      <button onclick="moveModel(0.2,0,0)">Rechts</button>
-      <button onclick="moveModel(0,0,0.2)">Nach hinten</button>
-      <button onclick="moveModel(0,0,-0.2)">Nach vorne</button>
-      <button onclick="moveModel(0,0.2,0)">Nach oben</button>
-      <button onclick="moveModel(0,-0.2,0)">Nach unten</button>
-      <button onclick="playAnim('Mount')">Montieren</button>
-      <button onclick="playAnim('Dismount')">Demontieren</button>
-      <button onclick="showAnims()">Animationen anzeigen</button>
-      <!-- باقي الأزرار (لو عندك أزرار إضافية اتركهم بنفس الاسم بدون تغيير) -->
-    </div>
-    <a-scene background="color: transparent">
-      <a-assets>
-        <a-asset-item id="gltf" src="model.glb"></a-asset-item>
-      </a-assets>
-      <a-entity id="model"
-        gltf-model="#gltf"
-        position="0 1.5 -3"
-        scale="1 1 1">
-      </a-entity>
-      <a-entity id="mainCamera"
-        camera
-        position="0 1.5 0">
-      </a-entity>
-    </a-scene>
+  <body style="margin:0;overflow:hidden;">
+    <video id="cam-bg" autoplay playsinline muted style="width:100vw;height:100vh;object-fit:cover;background:#000"></video>
     <script>
-      // تشغيل الكاميرا بالخلفية
       const video = document.getElementById('cam-bg');
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({video: true})
           .then(function(stream) {
             video.srcObject = stream;
+            video.onloadedmetadata = function() {
+              video.play();
+              console.log('✅ الكاميرا تشتغل');
+            };
           })
           .catch(function(err) {
-            console.warn('Kamera kann nicht gestartet werden:', err);
+            alert('مشكلة في تشغيل الكاميرا: ' + err);
             video.style.display = "none";
           });
       } else {
+        alert('getUserMedia غير مدعومة!');
         video.style.display = "none";
-      }
-
-      let modelReady = false;
-      const model = document.getElementById('model');
-      model.addEventListener('model-loaded', function () {
-        modelReady = true;
-        model.removeAttribute('animation-mixer');
-      });
-
-      function moveModel(dx,dy,dz) {
-        if (!modelReady) return;
-        let pos = model.getAttribute('position');
-        model.setAttribute('position', {
-          x: pos.x + dx,
-          y: pos.y + dy,
-          z: pos.z + dz
-        });
-      }
-
-      function playAnim(clipName) {
-        if (!modelReady) {
-          alert("Das Modell ist noch nicht geladen!");
-          return;
-        }
-        model.setAttribute('animation-mixer', {
-          clip: clipName,
-          loop: 'once',
-          timeScale: 1,
-          repetitions: 1,
-          root: true
-        });
-        setTimeout(() => {
-          let mixer = model.components['animation-mixer'];
-          if (!mixer || !mixer.mixer || mixer.mixer._actions.length === 0) {
-            alert("⚠️ Animation konnte nicht abgespielt werden: " + clipName + "\nPrüfen Sie den Namen oder die Datei.");
-          }
-        }, 500);
-      }
-
-      function showAnims() {
-        if (!modelReady) {
-          alert("Das Modell ist noch nicht geladen!");
-          return;
-        }
-        let anims = [];
-        try {
-          anims = model.components['gltf-model'].model.animations || [];
-        } catch(e) {}
-        if (!anims || anims.length === 0) {
-          alert("⚠️ Keine Animationen im Modell gefunden!\n\nFalls Sie Animationen im gltf-viewer sehen, aber hier nicht, liegt das an der Export-Methode.");
-        } else {
-          let msg = "Animationen im Modell:\n";
-          for (let a of anims) msg += "- " + a.name + "\n";
-          alert(msg);
-        }
-      }
-
-      // الكاميرا: Orbit للكمبيوتر، LookControls للموبايل
-      const cam = document.getElementById('mainCamera');
-      if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        cam.setAttribute('look-controls', '');
-      } else {
-        cam.setAttribute('orbit-controls', `
-          target: 0 1.5 -3;
-          enableDamping: true;
-          dampingFactor: 0.12;
-          rotateSpeed: 0.9;
-          zoomSpeed: 1.2;
-          panSpeed: 1.0;
-          minDistance: 1;
-          maxDistance: 20;
-          screenSpacePanning: true;
-        `);
       }
     </script>
   </body>
